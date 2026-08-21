@@ -392,10 +392,11 @@ class cubicle {
     south: cubicle
     east: cubicle
     west: cubicle
-    northDoorOpen: false
-    eastDoorOpen: false
-    southDoorOpen: false
-    westDoorOpen: false
+    northDoorOpen = false
+    eastDoorOpen = false
+    southDoorOpen = false
+    westDoorOpen = false
+    expanded = false
     type: CubicleType
 
     constructor(public parent: cubicle, public parentDir: Direction) {
@@ -422,11 +423,17 @@ class cubicle {
                 break
         }
 
-        target.drawImage(this.image, (160 - 74) / 2 - playerX + offsetX, (120 - 74) / 2 - playerY + offsetY)
-        if (this.northDoorOpen) target.drawImage(doorOpenNorth, (160 - 74) / 2 - playerX + offsetX, (120 - 74) / 2 - playerY + offsetY)
-        if (this.eastDoorOpen) target.drawImage(doorOpenNorth.rotated(90), (160 - 74) / 2 - playerX + offsetX, (120 - 74) / 2 - playerY + offsetY)
-        if (this.southDoorOpen) target.drawImage(doorOpenNorth.rotated(180), (160 - 74) / 2 - playerX + offsetX, (120 - 74) / 2 - playerY + offsetY)
-        if (this.westDoorOpen) target.drawImage(doorOpenNorth.rotated(270), (160 - 74) / 2 - playerX + offsetX, (120 - 74) / 2 - playerY + offsetY)
+        target.drawImage(this.image, (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+
+        if (this.northDoorOpen) target.drawTransparentImage(doorOpenNorth, (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+        if (this.eastDoorOpen) target.drawTransparentImage(doorOpenNorth.rotated(90), (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+        if (this.southDoorOpen) target.drawTransparentImage(doorOpenNorth.rotated(180), (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+        if (this.westDoorOpen) target.drawTransparentImage(doorOpenNorth.rotated(270), (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+
+        if (!this.northDoorOpen && this.north) target.drawTransparentImage(doorClosedNorth, (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+        if (!this.eastDoorOpen && this.east) target.drawTransparentImage(doorClosedNorth.rotated(90), (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+        if (!this.southDoorOpen && this.south) target.drawTransparentImage(doorClosedNorth.rotated(180), (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
+        if (!this.westDoorOpen && this.west) target.drawTransparentImage(doorClosedNorth.rotated(270), (160 - 74) / 2 - (playerX | 0) + offsetX, (120 - 74) / 2 - (playerY | 0) + offsetY)
     }
 
     updateImage() {
@@ -443,24 +450,49 @@ class cubicle {
                 break
             
         }
-        if (!base) {base = image.create(74, 74); base.fill(2)}
+        //if (!base) {base = image.create(74, 74); base.fill(2)}
+        if (!base) base = baseCubicle.clone()
         this.image = base
     }
 
     expandCubicle() {
-        
+        if (this.expanded) return
+        this.expanded = true
         if (this.type = CubicleType.Normal) {
-            this.north = (this.parentDir == Direction.North) ? this.parent : new cubicle(this, Direction.South)
-            this.east = (this.parentDir == Direction.East) ? this.parent : new cubicle(this, Direction.West)
-            this.south = (this.parentDir == Direction.South) ? this.parent : new cubicle(this, Direction.North)
-            this.west = (this.parentDir == Direction.West) ? this.parent : new cubicle(this, Direction.East)
+            this.north = (this.parentDir == Direction.North) ? this.parent : (randint(0, 1)) ? new cubicle(this, Direction.South) : undefined
+            this.east = (this.parentDir == Direction.East) ? this.parent : (randint(0, 1)) ? new cubicle(this, Direction.West) : undefined
+            this.south = (this.parentDir == Direction.South) ? this.parent : (randint(0, 1)) ? new cubicle(this, Direction.North) : undefined
+            this.west = (this.parentDir == Direction.West) ? this.parent : (randint(0, 1)) ? new cubicle(this, Direction.East) : undefined
+        }
+
+        let validDirs = []
+        if (this.north) validDirs.push(0)
+        if (this.east) validDirs.push(1)
+        if (this.south) validDirs.push(2)
+        if (this.west) validDirs.push(3)
+        if (validDirs.length == 1) {
+            switch(validDirs[0]) {
+                case (0): 
+                    new cubicle(this, Direction.South)
+                    break
+                case (1):
+                    new cubicle(this, Direction.West)
+                    break
+                case (2):
+                    new cubicle(this, Direction.North)
+                    break
+                case (3):
+                    new cubicle(this, Direction.East)
+                    break
+
+            }
         }
 
         let normalCount = 0
-        if (this.north.isNormalIsh()) normalCount++
-        if (this.east.isNormalIsh()) normalCount++
-        if (this.south.isNormalIsh()) normalCount++
-        if (this.west.isNormalIsh()) normalCount++
+        if (this.north && this.north.isNormalIsh()) normalCount++
+        if (this.east && this.east.isNormalIsh()) normalCount++
+        if (this.south && this.south.isNormalIsh()) normalCount++
+        if (this.west && this.west.isNormalIsh()) normalCount++
 
         if (normalCount == 0) {
             let room = randint(0, 3)
@@ -474,7 +506,8 @@ class cubicle {
     }
 
     isNormalIsh() {
-        return (this.type == CubicleType.Home || this.type == CubicleType.Normal || this.type == CubicleType.Elevator)
+        //return (this.type == CubicleType.Home || this.type == CubicleType.Normal || this.type == CubicleType.Elevator)
+        return true
     }
 }
 
@@ -485,6 +518,7 @@ currentCubicle.south.type = CubicleType.Normal
 currentCubicle.north = undefined
 currentCubicle.east = undefined
 currentCubicle.west = undefined
+currentCubicle.expanded = true
 currentCubicle.updateImage()
 
 scene.createRenderable(-1, (target) => {
@@ -494,15 +528,20 @@ scene.createRenderable(-1, (target) => {
     if (controller.right.isPressed()) playerX += playerSpeed
     
     if (playerChangingRooms == 0) {
-        if (playerX < -56 / 2) playerX = -56 / 2
-        if (playerY < -56 / 2) playerY = -56 / 2
-        if (playerX > 56 / 2) playerX = 56 / 2
-        if (playerY > 56 / 2) playerY = 56 / 2
+        if (playerX < -56 / 2 && !currentCubicle.west) playerX = -56 / 2
+        if (playerY < -56 / 2 && !currentCubicle.north) playerY = -56 / 2
+        if (playerX > 56 / 2 && !currentCubicle.east) playerX = 56 / 2
+        if (playerY > 56 / 2 && !currentCubicle.south) playerY = 56 / 2
     } else if (playerChangingRooms == 1) {
 
     } else {
 
     }
+
+    if (playerX > 37) { currentCubicle = currentCubicle.east, playerX -= 70, currentCubicle.westDoorOpen = true, currentCubicle.expandCubicle() }
+    if (playerY > 37) { currentCubicle = currentCubicle.south, playerY -= 70, currentCubicle.northDoorOpen = true, currentCubicle.expandCubicle() }
+    if (playerX < -37) { currentCubicle = currentCubicle.west, playerX = 36, currentCubicle.eastDoorOpen = true, currentCubicle.expandCubicle() }
+    if (playerY < -37) { currentCubicle = currentCubicle.north, playerY = 36, currentCubicle.southDoorOpen = true, currentCubicle.expandCubicle() }
 
     currentCubicle.render(target, 0)
     if (currentCubicle.north && currentCubicle.northDoorOpen) currentCubicle.north.render(target, 1)
