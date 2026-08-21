@@ -216,8 +216,32 @@ scene.createRenderable(0, (target) => {
     target.drawImage(homeCubicle, (160 - 74) / 2, (120 - 74) / 2)
 })
 
+enum Direction {
+    North,
+    East,
+    South,
+    West
+}
+
+enum CubicleType {
+    Home,
+    Normal,
+    Static,
+    Hole,
+    Juicy,
+    Empty, // No doors?
+    Dark,
+    JackInTheBox, // Pop goes the weasle plays, if you're still in the room when it finishes you... pop...
+    Stairs, // must go down 3 flights of stairs before the exit becomes a possible cubicle type
+    Exit, // ?
+}
+
 class cubicle {
-    constructor (public parent: cubicle, north: cubicle, south: cubicle, east: cubicle, west: cubicle) {
+    north: cubicle
+    south: cubicle
+    east: cubicle
+    west: cubicle
+    constructor(type: CubicleType, public parent: cubicle, public parentDir: Direction, ) {
         
     }
 }
