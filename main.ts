@@ -175,8 +175,6 @@ let doorsOpenCubicle = img`
     .
 `
 
-
-
 const palette1 = currentPalette.slice()
 palette1.fill(0, 0, 24)
 const palette2 = currentPalette.slice()
@@ -187,7 +185,7 @@ palette2.shift(24)
 //pause(20 * 100)
 //fadeToPalette(palette2, 100)
 
-let player = img`
+let player = sprites.create(img`
     ....................
     ....................
     ....................
@@ -208,13 +206,10 @@ let player = img`
     ....................
     ....................
     ....................
-`
-let playerX = 80
-let playerY = 60
+`)
+controller.moveSprite(player, 50, 50)
 
-scene.createRenderable(0, (target) => {
-    target.drawImage(homeCubicle, (160 - 74) / 2, (120 - 74) / 2)
-})
+let currentCubicle: cubicle
 
 enum Direction {
     North,
@@ -236,12 +231,104 @@ enum CubicleType {
     Exit, // ?
 }
 
+let stairCount = 0 
+
 class cubicle {
+    image: Image
+
     north: cubicle
     south: cubicle
     east: cubicle
     west: cubicle
-    constructor(type: CubicleType, public parent: cubicle, public parentDir: Direction, ) {
+    northDoorOpen: false
+    eastDoorOpen: false
+    southDoorOpen: false
+    westDoorOpen: false
+    type: CubicleType
+
+    constructor(public parent: cubicle, public parentDir: Direction) {
+        this.type = randint(1, (stairCount > 2) ? CubicleType.Exit : CubicleType.Stairs)
+        this.updateImage()
+    }
+
+    render(target: Image) {
+        target.drawImage(this.image, (160 - 74) / 2, (120 - 74) / 2)
+    }
+
+    updateImage() {
+        let base: Image
+
+        switch (this.type) {
+            case (CubicleType.Home):
+                base = homeCubicle.clone()
+                break
+            case (CubicleType.Normal):
+            case (CubicleType.JackInTheBox):
+            case (CubicleType.Empty):
+                base = baseCubicle.clone()
+                break
+            
+        }
+        this.image = base
+    }
+
+    expandCubicle() {
         
+        if (this.type = CubicleType.Normal) {
+            this.north = (this.parentDir == Direction.North) ? this.parent : new cubicle(this, Direction.South)
+            this.east = (this.parentDir == Direction.East) ? this.parent : new cubicle(this, Direction.West)
+            this.south = (this.parentDir == Direction.South) ? this.parent : new cubicle(this, Direction.North)
+            this.west = (this.parentDir == Direction.West) ? this.parent : new cubicle(this, Direction.East)
+        }
+
+        
+
+        if (!this.north.isNormalIsh() && !this.east.isNormalIsh() && !this.south.isNormalIsh() && !this.west.isNormalIsh()) {
+            let room = randint(0, 3)
+            switch (room) {
+                case (0): this.north.type = CubicleType.Normal
+                case (1): this.east.type = CubicleType.Normal
+                case (2): this.south.type = CubicleType.Normal
+                case (3): this.west.type = CubicleType.Normal
+            }
+        }
+    }
+
+    isNormalIsh() {
+        return (this.type == CubicleType.Home || this.type == CubicleType.Normal || this.type == CubicleType.Stairs)
     }
 }
+
+
+
+currentCubicle = new cubicle(undefined, 5)
+currentCubicle.type = CubicleType.Home
+currentCubicle.south = new cubicle(currentCubicle, Direction.North)
+currentCubicle.south.type = CubicleType.Normal
+currentCubicle.north = undefined
+currentCubicle.east = undefined
+currentCubicle.west = undefined
+currentCubicle.updateImage()
+
+scene.createRenderable(-1, (target) => {
+    currentCubicle.render(target)
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
