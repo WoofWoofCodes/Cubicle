@@ -208,6 +208,9 @@ let player = sprites.create(img`
     ....................
 `)
 controller.moveSprite(player, 50, 50)
+scene.cameraFollowSprite(player)
+player.x = 0
+player.y = 0
 
 let currentCubicle: cubicle
 
@@ -227,7 +230,7 @@ enum CubicleType {
     Empty, // No doors?
     Dark,
     JackInTheBox, // Pop goes the weasle plays, if you're still in the room when it finishes you... pop...
-    Stairs, // must go down 3 flights of stairs before the exit becomes a possible cubicle type
+    Elevator, // must go down 3 elevators before the exit becomes a possible cubicle type
     Exit, // ?
 }
 
@@ -247,12 +250,12 @@ class cubicle {
     type: CubicleType
 
     constructor(public parent: cubicle, public parentDir: Direction) {
-        this.type = randint(1, (stairCount > 2) ? CubicleType.Exit : CubicleType.Stairs)
+        this.type = randint(1, (stairCount > 2) ? CubicleType.Exit : CubicleType.Elevator)
         this.updateImage()
     }
 
     render(target: Image) {
-        target.drawImage(this.image, (160 - 74) / 2, (120 - 74) / 2)
+        target.drawImage(this.image, (160 - 74) / 2 - player.x, (120 - 74) / 2 - player.y)
     }
 
     updateImage() {
@@ -281,9 +284,13 @@ class cubicle {
             this.west = (this.parentDir == Direction.West) ? this.parent : new cubicle(this, Direction.East)
         }
 
-        
+        let normalCount = 0
+        if (this.north.isNormalIsh()) normalCount++
+        if (this.east.isNormalIsh()) normalCount++
+        if (this.south.isNormalIsh()) normalCount++
+        if (this.west.isNormalIsh()) normalCount++
 
-        if (!this.north.isNormalIsh() && !this.east.isNormalIsh() && !this.south.isNormalIsh() && !this.west.isNormalIsh()) {
+        if (normalCount == 0) {
             let room = randint(0, 3)
             switch (room) {
                 case (0): this.north.type = CubicleType.Normal
@@ -295,11 +302,9 @@ class cubicle {
     }
 
     isNormalIsh() {
-        return (this.type == CubicleType.Home || this.type == CubicleType.Normal || this.type == CubicleType.Stairs)
+        return (this.type == CubicleType.Home || this.type == CubicleType.Normal || this.type == CubicleType.Elevator)
     }
 }
-
-
 
 currentCubicle = new cubicle(undefined, 5)
 currentCubicle.type = CubicleType.Home
@@ -312,6 +317,10 @@ currentCubicle.updateImage()
 
 scene.createRenderable(-1, (target) => {
     currentCubicle.render(target)
+    if (currentCubicle.north) currentCubicle.north.render(target)
+    if (currentCubicle.east) currentCubicle.east.render(target)
+    if (currentCubicle.south) currentCubicle.south.render(target)
+    if (currentCubicle.west) currentCubicle.west.render(target)
 })
 
 
