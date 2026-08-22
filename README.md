@@ -1,5 +1,5 @@
  
-
+A small demo for the MakeCode Arcade "Corporation" mini game jam. In the game you will be trapped in an endless maze of cubicles, trying to find the exit and go home. This demo features the cubicle generation system.
 
 > Open this page at [https://woofwoofcodes.github.io/cubicle/](https://woofwoofcodes.github.io/cubicle/)
 
